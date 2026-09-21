@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 75
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,12 +29,19 @@ jobs:
       - name: Verify imports
         shell: pwsh
         run: |
-          python -c "import openai, cv2, numpy, PIL, PySide6, manga_ocr, torch; print('Dependencies OK')"
+          python -c "import openai, cv2, numpy, PIL, PySide6, manga_ocr, torch, transformers, unidic_lite; print('Dependencies OK')"
 
       - name: Build portable app
         shell: pwsh
         run: |
-          pyinstaller --noconfirm --clean --windowed --onedir --name MangaTranslatorPortable --collect-all manga_ocr --collect-all transformers --collect-all torch --collect-all tokenizers --hidden-import openai --hidden-import cv2 main.py
+          pyinstaller --noconfirm --clean --windowed --onedir --name MangaTranslatorPortable --collect-all manga_ocr --collect-all transformers --collect-all torch --collect-all tokenizers --collect-all unidic_lite --hidden-import fugashi --hidden-import ipadic --hidden-import openai --hidden-import cv2 main.py
+
+      - name: Verify UniDic packaged
+        shell: pwsh
+        run: |
+          $p = Get-ChildItem -Path dist\MangaTranslatorPortable -Recurse -Filter version | Where-Object { $_.FullName -match 'unidic_lite.*dicdir' } | Select-Object -First 1
+          if (-not $p) { throw "unidic_lite dictionary was not packaged" }
+          Write-Host "UniDic dictionary found at $($p.FullName)"
 
       - name: Package ZIP
         shell: pwsh
