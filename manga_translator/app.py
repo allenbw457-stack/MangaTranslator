@@ -46,8 +46,17 @@ class Main(QMainWindow):
     def select(self,i):
         if 0<=i<len(self.pages):self.preview.show_image(self.pages[i])
     def settings(self):
-        k,ok=QInputDialog.getText(self,"OpenAI API","API Key",QLineEdit.Password,self.key)
-        if ok:self.key=k.strip()
+        k,ok=QInputDialog.getText(self,"OpenAI API","請貼上 API Key（以 sk- 開頭）。不要選擇檔案或貼入檔案路徑。",QLineEdit.Password,self.key)
+        if ok:
+            k=k.strip().strip('"').strip("'")
+            if k.lower().startswith(("file:","http:","https:")) or "/" in k or "\\" in k:
+                QMessageBox.warning(self,"API Key 格式錯誤","你輸入的內容看起來是檔案路徑或網址，不是 OpenAI API Key。\n\n請貼上以 sk- 開頭的 API Key。")
+                return
+            if not k.startswith("sk-"):
+                QMessageBox.warning(self,"API Key 格式錯誤","OpenAI API Key 應以 sk- 開頭。請重新貼上正確的 Key。")
+                return
+            self.key=k
+            self.statusBar().showMessage("API Key 已設定（只保存在目前程式記憶體中）")
     def analyze_current(self):
         i=self.list.currentRow()
         if i<0:return
