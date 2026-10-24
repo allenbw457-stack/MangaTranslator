@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json,re,cv2,numpy as np
 from PIL import Image,ImageDraw,ImageFont
+from .vision import translate_page_vision
 JP_RE=re.compile(r"[\u3040-\u30ff\u3400-\u9fff々〆ヶー]")
 def natural_key(s): return [int(x) if x.isdigit() else x.lower() for x in re.split(r"(\d+)",str(s))]
 class OCR:
@@ -87,6 +88,6 @@ def draw_text(img,box,text):
         tw=d.textbbox((0,0),line,font=f)[2]; d.text((x1+(w-tw)//2,y),line,font=f,fill="black");y+=lh
     return img
 def process_page(path,out_path,ocr,key,model,previous=""):
-    img=Image.open(path).convert("RGB"); regs=analyze(img,ocr); zhs=translate(regs,key,model,previous); out=img.copy()
+    img=Image.open(path).convert("RGB"); regs=analyze(img,ocr); zhs=translate_page_vision(img,regs,key,model,previous); out=img.copy()
     for r,z in zip(regs,zhs): out=clean(out,r["box"]);out=draw_text(out,r["box"],z);r["zh"]=z
     out.save(out_path,"PNG"); return regs,"\n".join(f"{r['jp']} → {r.get('zh','')}" for r in regs)
